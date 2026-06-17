@@ -1,0 +1,9 @@
+Metadata-Version: 2.4
+Name: call-me-maybe
+Version: 0.1.0
+Summary: Add your description here
+Requires-Python: >=3.14
+Description-Content-Type: text/markdown
+Requires-Dist: pydantic>=2.13.4
+Requires-Dist: rich>=15.0.0
+Requires-Dist: typer>=0.26.7
