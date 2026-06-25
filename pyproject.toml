@@ -5,10 +5,10 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.14"
 dependencies = [
+    "argparse>=1.4.0",
     "llm-sdk",
     "pydantic>=2.13.4",
     "rich>=15.0.0",
-    "typer>=0.26.7",
 ]
 
 [dependency-groups]
