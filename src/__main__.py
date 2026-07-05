@@ -1,9 +1,8 @@
 import argparse
 import logging
-from pathlib import Path
 
-from llm_sdk import Small_LLM_Model
 from generator import Generator
+from llm_sdk import Small_LLM_Model
 from loader import get_promts, save_functions
 
 
@@ -11,10 +10,14 @@ DEFAULT_FUNCTIONS = "data/input/functions_definition.json"
 DEFAULT_INPUT = "data/input/function_calling_tests.json"
 DEFAULT_OUTPUT = "data/output/function_calling_results.json"
 
-logging.basicConfig(level=logging.DEBUG, format="%(asctime)s - %(levelname)s - %(message)s")
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(levelname)s - %(message)s",
+)
 
 
 def main() -> None:
+    """Run the function-calling pipeline from the command line."""
     parser = argparse.ArgumentParser(
         description="CallMeMaybe - function calling with constrained decoding"
     )
@@ -23,25 +26,42 @@ def main() -> None:
     parser.add_argument("--output", default=DEFAULT_OUTPUT)
     args = parser.parse_args()
 
-    model = Small_LLM_Model()
+    try:
+        model = Small_LLM_Model()
+    except Exception as error:  # pragma: no cover - runtime dependency path
+        logging.error("Unable to initialize the language model: %s", error)
+        return
+
     generator = Generator(
         model=model,
         path_functions=args.functions_definition,
         output_file=args.output,
     )
 
-    prompts = get_promts(args.input)
+    try:
+        prompts = get_promts(args.input)
+    except Exception as error:  # pragma: no cover - runtime dependency path
+        logging.error("Unable to load prompts: %s", error)
+        return
+
     if not prompts:
         logging.error("No prompts to process")
         return
 
     results = []
     for prompt in prompts:
-        result = generator.generate(prompt.prompt)
+        try:
+            result = generator.generate(prompt.prompt)
+        except Exception as error:
+            logging.error(
+                "Failed to process prompt '%s': %s",
+                prompt.prompt,
+                error
+            )
+            continue
         if result is not None:
             results.append(result)
 
-    Path(args.output).parent.mkdir(parents=True, exist_ok=True)
     save_functions(args.output, results)
     print(f"Saved {len(results)} results to {args.output}")
 

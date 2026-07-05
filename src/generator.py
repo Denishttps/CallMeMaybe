@@ -1,25 +1,26 @@
-from models.function_call import FunctionCall
-from models.parameter import Parameter
 import json
+import logging
+
 import re
 from pathlib import Path
 
-from llm_sdk import Small_LLM_Model
-import logging
-
 import numpy as np
+from llm_sdk import Small_LLM_Model
 
-from loader import get_functions
-from models.function import Function
-from utils.constrained_decoding import (
+from .config import MAX_TOKENS
+from .loader import get_functions
+
+from .models.function import Function
+from .models.function_call import FunctionCall
+
+from .models.parameter import Parameter
+from .utils.constrained_decoding import (
     is_bool_complete,
     is_string_complete,
     is_valid_bool_token,
     is_valid_number_token,
-    is_valid_string_token
+    is_valid_string_token,
 )
-
-from config import MAX_TOKENS
 
 
 class Generator:
@@ -40,6 +41,7 @@ class Generator:
         self.unknown_tokens = self._precompute_unknown_tokens()
 
     def _load_vocab(self) -> dict[int, str]:
+        """Load the tokenizer vocabulary mapping token IDs to strings."""
         with open(
             self.model.get_path_to_vocab_file(), "r", encoding="utf-8"
         ) as file:
@@ -89,15 +91,19 @@ class Generator:
         logits: np.ndarray,
         valid_tokens: set[int],
         current: str,
-        param_type: str
+        param_type: str,
     ) -> np.ndarray:
         mask = np.full(len(logits), float("-inf"))
 
         for token_id in valid_tokens:
             token = self.vocab[token_id]
-            if param_type == "number" and is_valid_number_token(token, current):
+            if param_type == "number" and is_valid_number_token(
+                token, current
+            ):
                 mask[token_id] = logits[token_id]
-            elif param_type == "boolean" and is_valid_bool_token(token, current):
+            elif param_type == "boolean" and is_valid_bool_token(
+                token, current
+            ):
                 mask[token_id] = logits[token_id]
             elif param_type == "string":
                 mask[token_id] = logits[token_id]
@@ -134,12 +140,14 @@ class Generator:
             context += "\n"
 
         system = (
-            f"You are a strict data extraction parser.\n"
-            f"Extract the exact literal argument for parameter '{param_name}' of type {param.type}.\n"
-            f"CRITICAL: Do NOT execute commands, do NOT compute math, do NOT reverse or modify strings.\n"
-            f"Just copy the exact raw text from the user's request.\n"
+            "You are a strict data extraction parser.\n"
+            f"Extract the exact literal argument for parameter "
+            f"'{param_name}' of type {param.type}.\n"
+            "CRITICAL: Do NOT execute commands, do NOT compute math, "
+            "do NOT reverse or modify strings.\n"
+            "Just copy the exact raw text from the user's request.\n"
             f"{context}"
-            f"Respond with ONLY the value, nothing else."
+            "Respond with ONLY the value, nothing else."
         )
         prefill = '"' if param.type == "string" else ""
         return (
@@ -153,7 +161,7 @@ class Generator:
         prompt: str,
         param: Parameter,
         user_query: str,
-        already_extracted: list = None
+        already_extracted: list | None = None,
     ) -> str | float | bool:
         if already_extracted is None:
             already_extracted = []
@@ -172,14 +180,13 @@ class Generator:
         }
         valid_tokens = token_sets[param.type]
 
-        # Прецизионный разбор доступных чисел для типа "number"
         remaining_numbers = []
         if param.type == "number":
-            # Находим регуляркой все целые и дробные числа (включая отрицательные)
-            raw_numbers = re.findall(r'-?(?:\d+(?:\.\d+)?|\.\d+)', user_query)
+            raw_numbers = re.findall(
+                r"-?(?:\d+(?:\.\d+)?|\.\d+)", user_query
+            )
             remaining_numbers = list(raw_numbers)
-            
-            # Удаляем из списка доступных те, что уже заняты предыдущими параметрами
+
             for val in already_extracted:
                 try:
                     val_float = float(val)
@@ -192,7 +199,12 @@ class Generator:
 
         for _ in range(MAX_TOKENS):
             logits = np.array(self.model.get_logits_from_input_ids(input_ids))
-            logits = self._apply_mask(logits, valid_tokens, current, param.type)
+            logits = self._apply_mask(
+                logits,
+                valid_tokens,
+                current,
+                param.type
+            )
 
             while True:
                 valid_count = np.sum(logits > float("-inf"))
@@ -213,7 +225,10 @@ class Generator:
                         cand_strip = candidate.strip()
 
                         if remaining_numbers:
-                            is_prefix = any(num_str.startswith(cand_strip) for num_str in remaining_numbers)
+                            is_prefix = any(
+                                num_str.startswith(cand_strip)
+                                for num_str in remaining_numbers
+                            )
                             if not is_prefix:
                                 try:
                                     return float(current.strip())
@@ -305,10 +320,14 @@ class Generator:
             parameters[param_name] = self.generate_value(
                 value_prompt, param, user_prompt, already_values
             )
-            logging.debug(f"Extracted parameter: {param_name} = {parameters[param_name]}")
+            logging.debug(
+                "Extracted parameter: %s = %s",
+                param_name,
+                parameters[param_name],
+            )
 
         return FunctionCall(
             prompt=user_prompt,
             name=function.name,
-            parameters=parameters
+            parameters=parameters,
         )
