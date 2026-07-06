@@ -3,12 +3,10 @@ import logging
 
 from generator import Generator
 from llm_sdk import Small_LLM_Model
+
 from loader import get_promts, save_functions
+from config import DEFAULT_FUNCTIONS, DEFAULT_INPUT, DEFAULT_OUTPUT
 
-
-DEFAULT_FUNCTIONS = "data/input/functions_definition.json"
-DEFAULT_INPUT = "data/input/function_calling_tests.json"
-DEFAULT_OUTPUT = "data/output/function_calling_results.json"
 
 logging.basicConfig(
     level=logging.INFO,
@@ -28,7 +26,7 @@ def main() -> None:
 
     try:
         model = Small_LLM_Model()
-    except Exception as error:  # pragma: no cover - runtime dependency path
+    except Exception as error:
         logging.error("Unable to initialize the language model: %s", error)
         return
 
@@ -40,7 +38,7 @@ def main() -> None:
 
     try:
         prompts = get_promts(args.input)
-    except Exception as error:  # pragma: no cover - runtime dependency path
+    except Exception as error:
         logging.error("Unable to load prompts: %s", error)
         return
 

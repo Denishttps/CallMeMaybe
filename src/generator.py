@@ -7,14 +7,14 @@ from pathlib import Path
 import numpy as np
 from llm_sdk import Small_LLM_Model
 
-from .config import MAX_TOKENS
-from .loader import get_functions
+from config import MAX_TOKENS
+from loader import get_functions
 
-from .models.function import Function
-from .models.function_call import FunctionCall
+from models.function import Function
+from models.function_call import FunctionCall
 
-from .models.parameter import Parameter
-from .utils.constrained_decoding import (
+from models.parameter import Parameter
+from utils.constrained_decoding import (
     is_bool_complete,
     is_string_complete,
     is_valid_bool_token,
@@ -49,6 +49,7 @@ class Generator:
         return {int(value): key for key, value in vocab.items()}
 
     def _load_functions(self, path: str | Path | None) -> list[Function]:
+        """Load function definitions from a JSON file, returning a list of Function objects.""" # noqa
         try:
             return get_functions(path)
         except Exception as e:
@@ -56,10 +57,12 @@ class Generator:
             return []
 
     def _precompute_unknown_tokens(self) -> set[int]:
+        """Identify token IDs that are not present in the vocabulary."""
         all_ids = set(range(max(self.vocab.keys()) + 1))
         return all_ids - set(self.vocab.keys())
 
     def _precompute_number_tokens(self) -> set[int]:
+        """Identify token IDs that can represent numbers, including digits, decimal points, and scientific notation.""" # noqa
         valid = set()
         for token_id, token in self.vocab.items():
             stripped = token.strip()
@@ -70,6 +73,7 @@ class Generator:
         return valid
 
     def _precompute_bool_tokens(self) -> set[int]:
+        """Identify token IDs that can represent boolean values, specifically 'true' and 'false'.""" # noqa
         valid = set()
         for token_id, token in self.vocab.items():
             stripped = token.strip().lower()
@@ -80,6 +84,7 @@ class Generator:
         return valid
 
     def _precompute_string_tokens(self) -> set[int]:
+        """Identify token IDs that can represent strings, including letters, digits, punctuation, and whitespace.""" # noqa
         valid = set()
         for token_id, token in self.vocab.items():
             if is_valid_string_token(token):
@@ -93,6 +98,7 @@ class Generator:
         current: str,
         param_type: str,
     ) -> np.ndarray:
+        """Apply a mask to the logits, allowing only valid tokens for the current parameter type and context.""" # noqa
         mask = np.full(len(logits), float("-inf"))
 
         for token_id in valid_tokens:
@@ -111,6 +117,7 @@ class Generator:
         return mask
 
     def _build_prompt(self, user_prompt: str) -> str:
+        """Construct a system prompt that instructs the model to select a function based on the user's request.""" # noqa
         system = (
             "You are a function calling assistant.\n"
             "Given a user request, respond with ONLY the function name.\n\n"
@@ -132,6 +139,7 @@ class Generator:
         param: Parameter,
         extracted: dict[str, str] | None = None
     ) -> str:
+        """Construct a system prompt that instructs the model to extract the value for a specific parameter from the user's request.""" # noqa
         context = ""
         if extracted:
             context = "Already extracted:\n"
@@ -163,6 +171,7 @@ class Generator:
         user_query: str,
         already_extracted: list | None = None,
     ) -> str | float | bool:
+        """Generate a value for a specific parameter by decoding the model's output, ensuring it adheres to the expected type and constraints.""" # noqa
         if already_extracted is None:
             already_extracted = []
 
@@ -275,6 +284,7 @@ class Generator:
         return current
 
     def _choose_function(self, user_prompt: str) -> Function | None:
+        """Select the most appropriate function based on the user's prompt by decoding the model's output.""" # noqa
         prompt = self._build_prompt(user_prompt)
         input_ids = self.model.encode(prompt).tolist()[0]
         current = ""
@@ -304,6 +314,7 @@ class Generator:
                 return next(f for f in self.functions if f.name == current)
 
     def generate(self, user_prompt: str) -> FunctionCall | None:
+        """Generate a FunctionCall object based on the user's prompt by selecting the appropriate function and extracting its parameters." # noqa""" # noqa
         function = self._choose_function(user_prompt)
 
         if function is None:

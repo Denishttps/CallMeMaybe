@@ -13,18 +13,7 @@ logger = logging.getLogger(__name__)
 
 
 def get_functions(path: str | Path) -> list[Function]:
-    """Load function definitions from a JSON file.
-
-    Args:
-        path: Path to the JSON file containing function definitions.
-
-    Returns:
-        A validated list of Function objects.
-
-    Raises:
-        FileNotFoundError: If the input file does not exist.
-        ValueError: If the JSON content is invalid.
-    """
+    """Load function definitions from a JSON file."""
     adapter = TypeAdapter(list[Function])
     with open(path, "r", encoding="utf-8") as file:
         data = json.load(file)
@@ -32,18 +21,7 @@ def get_functions(path: str | Path) -> list[Function]:
 
 
 def get_promts(path: str | Path) -> list[Prompt]:
-    """Load prompts from a JSON file.
-
-    Args:
-        path: Path to the JSON file containing prompts.
-
-    Returns:
-        A validated list of Prompt objects.
-
-    Raises:
-        FileNotFoundError: If the input file does not exist.
-        ValueError: If the JSON content is invalid.
-    """
+    """Load prompts from a JSON file."""
     adapter = TypeAdapter(list[Prompt])
     with open(path, "r", encoding="utf-8") as file:
         data = json.load(file)
