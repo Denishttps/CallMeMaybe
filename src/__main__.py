@@ -2,7 +2,7 @@ import argparse
 import logging
 
 from generator import Generator
-from llm_sdk import Small_LLM_Model
+from llm_sdk import Small_LLM_Model  # type: ignore[import-untyped]
 
 from loader import get_promts, save_functions
 from config import DEFAULT_FUNCTIONS, DEFAULT_INPUT, DEFAULT_OUTPUT

@@ -5,7 +5,9 @@ import re
 from pathlib import Path
 
 import numpy as np
-from llm_sdk import Small_LLM_Model
+from llm_sdk import Small_LLM_Model  # type: ignore[import-untyped]
+
+from typing import Any
 
 from config import MAX_TOKENS
 from loader import get_functions
@@ -27,8 +29,8 @@ class Generator:
     def __init__(
         self,
         model: Small_LLM_Model,
-        path_functions: str | Path | None = None,
-        output_file: str | Path | None = None,
+        path_functions: str | Path,
+        output_file: str | Path,
     ):
         self.model = model
         self.functions = self._load_functions(path_functions)
@@ -48,7 +50,7 @@ class Generator:
             vocab = json.load(file)
         return {int(value): key for key, value in vocab.items()}
 
-    def _load_functions(self, path: str | Path | None) -> list[Function]:
+    def _load_functions(self, path: str | Path) -> list[Function]:
         """Load function definitions from a JSON file, returning a list of Function objects.""" # noqa
         try:
             return get_functions(path)
@@ -313,6 +315,8 @@ class Generator:
             if current in function_names:
                 return next(f for f in self.functions if f.name == current)
 
+        return None
+
     def generate(self, user_prompt: str) -> FunctionCall | None:
         """Generate a FunctionCall object based on the user's prompt by selecting the appropriate function and extracting its parameters." # noqa""" # noqa
         function = self._choose_function(user_prompt)
@@ -321,7 +325,7 @@ class Generator:
             logging.error("No function found")
             return None
 
-        parameters = {}
+        parameters: dict[str, Any] = {}
         for param_name, param in function.parameters.items():
             value_prompt = self._build_value_prompt(
                 user_prompt, param_name, param, parameters
