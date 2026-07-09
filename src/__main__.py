@@ -1,11 +1,11 @@
 import argparse
 import logging
 
-from generator import Generator
 from llm_sdk import Small_LLM_Model  # type: ignore[import-untyped]
+from src.generator import Generator
 
-from loader import get_promts, save_functions
-from config import DEFAULT_FUNCTIONS, DEFAULT_INPUT, DEFAULT_OUTPUT
+from src.loader import get_promts, save_functions
+from src.config import DEFAULT_FUNCTIONS, DEFAULT_INPUT, DEFAULT_OUTPUT
 
 
 logging.basicConfig(

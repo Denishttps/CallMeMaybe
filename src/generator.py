@@ -9,14 +9,14 @@ from llm_sdk import Small_LLM_Model  # type: ignore[import-untyped]
 
 from typing import Any
 
-from config import MAX_TOKENS
-from loader import get_functions
+from src.config import MAX_TOKENS
+from src.loader import get_functions
 
-from models.function import Function
-from models.function_call import FunctionCall
+from src.models.function import Function
+from src.models.function_call import FunctionCall
 
-from models.parameter import Parameter
-from utils.constrained_decoding import (
+from src.models.parameter import Parameter
+from src.utils.constrained_decoding import (
     is_bool_complete,
     is_string_complete,
     is_valid_bool_token,

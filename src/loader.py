@@ -4,9 +4,9 @@ from pathlib import Path
 
 from pydantic import TypeAdapter
 
-from models.function import Function
-from models.function_call import FunctionCall
-from models.promt import Prompt
+from src.models.function import Function
+from src.models.function_call import FunctionCall
+from src.models.promt import Prompt
 
 
 logger = logging.getLogger(__name__)
