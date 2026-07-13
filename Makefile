@@ -1,8 +1,9 @@
-install:
-	uv sync
 
 run:
 	uv run python -m src
+
+install:
+	uv sync
 
 debug:
 	uv run python -m pdb -m src
